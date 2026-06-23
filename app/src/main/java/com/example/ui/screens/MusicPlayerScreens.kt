@@ -1313,7 +1313,7 @@ fun ExpandedPlayerScreen(
                         }
                     }
 
-                    "lyrics" -> LyricsScreen { activeExtraPanel = "none" }
+                    "lyrics" -> LyricsScreen(viewModel = viewModel) { activeExtraPanel = "none" }
                     "equalizer" -> EqualizerSheet(viewModel = viewModel, eqEnabled = eqEnabled, eqBands = eqBands) { activeExtraPanel = "none" }
                     "speed" -> SpeedSpeedControl(viewModel = viewModel, activeSpeed = speed) { activeExtraPanel = "none" }
                     "timer" -> SleepTimerSheet(viewModel = viewModel, activeTimer = sleepTimerRes) { activeExtraPanel = "none" }
@@ -1557,13 +1557,83 @@ fun CanvasAudioVisualizer(isPlaying: Boolean) {
 // 6. DETAILED DRAWER PRESETS SHEETS
 // ==========================================
 
+// Helper model inside MusicPlayerScreens.kt for synchronized karaoke lyrics
+data class TimedLyric(
+    val startMs: Long,
+    val endMs: Long,
+    val text: String
+)
+
+fun getLyricsForSong(song: com.example.data.Song, durationMs: Long): List<TimedLyric> {
+    val title = song.title
+    val artist = song.artist
+    val album = song.album
+    
+    val templates = listOf(
+        "♫ (Intro Instrumental Track) ♫",
+        "Walking down the neon highway",
+        "Listening to $title",
+        "Brought to life by $artist",
+        "Each beat tells a beautiful story",
+        "Echoing through the channels of $album",
+        "♫ (Synthesizer Interlude Solo) ♫",
+        "[Chorus]",
+        "Oh, vibrant frequencies, wash out the pain",
+        "Dancing inside this acoustic rain",
+        "Singing along with $artist's sweet keys",
+        "Ethereal walks inside the sonic breeze",
+        "♫ (Beat Drop & Outro Solo) ♫",
+        "Thank you for listening to $title"
+    )
+
+    val validDuration = if (durationMs > 0) durationMs else 180_000L
+    val segmentCount = templates.size
+    val segmentDuration = validDuration / (segmentCount + 1)
+    
+    return templates.mapIndexed { index, text ->
+        val start = segmentDuration * (index + 0.5).toLong()
+        val end = start + segmentDuration
+        TimedLyric(startMs = start, endMs = end, text = text)
+    }
+}
+
 // --- LYRICS PANEL ---
 @Composable
-fun LyricsScreen(onClose: () -> Unit) {
+fun LyricsScreen(viewModel: MainViewModel, onClose: () -> Unit) {
+    val currentSong by viewModel.currentSong.collectAsState()
+    val progressMs by viewModel.progressMs.collectAsState()
+    val durationMs by viewModel.durationMs.collectAsState()
+    
+    if (currentSong == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(text = "No track playing", color = Color.White.copy(alpha = 0.5f))
+        }
+        return
+    }
+
+    val lyrics = remember(currentSong!!.id, durationMs) {
+        getLyricsForSong(currentSong!!, durationMs)
+    }
+
+    // Determine the active line index
+    val activeLineIndex = remember(progressMs, lyrics) {
+        val idx = lyrics.indexOfLast { progressMs >= it.startMs }
+        if (idx == -1) 0 else idx
+    }
+
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+
+    // Smooth scroll to the active line index dynamically
+    LaunchedEffect(activeLineIndex) {
+        if (activeLineIndex >= 0 && lyrics.isNotEmpty()) {
+            listState.animateScrollToItem(index = activeLineIndex, scrollOffset = -200)
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White.copy(alpha = 0.02f))
+            .background(Color.White.copy(alpha = 0.01f))
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -1572,7 +1642,28 @@ fun LyricsScreen(onClose: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(stringResource(R.string.lyrics_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = NeonCyan)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Mic,
+                    contentDescription = null,
+                    tint = NeonCyan,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text(
+                        text = stringResource(R.string.lyrics_title),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = NeonCyan
+                    )
+                    Text(
+                        text = "Karaoke Sync Mode Active",
+                        fontSize = 10.sp,
+                        color = Color.White.copy(alpha = 0.5f)
+                    )
+                }
+            }
             IconButton(onClick = onClose) {
                 Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
             }
@@ -1580,40 +1671,100 @@ fun LyricsScreen(onClose: () -> Unit) {
         
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Large high-contrast scrollable text frame
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(bottom = 32.dp)
+        // Progress indicator highlighting the current overall karaoke status
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(Color.White.copy(alpha = 0.05f))
         ) {
-            val lines = listOf(
-                "Walking down the neon highway",
-                "Stars reflecting on your face",
-                "Analog synth plays in a dynamic cascade",
-                "Lost inside a vibrant, retro space.",
-                "",
-                "Let the low beats take you over",
-                "Rhythms pulsing through the air",
-                "Melodix brings the digital closer",
-                "Vibrations moving everywhere.",
-                "",
-                "[Chorus]",
-                "Oh, neon light, wash out the pain",
-                "Dancing inside the holographic rain",
-                "Singing along with soundwave keys",
-                "Ethereal walks inside the cosmic breeze..."
+            val progressFraction = if (durationMs > 0) progressMs.toFloat() / durationMs else 0f
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(progressFraction)
+                    .background(Brush.horizontalGradient(listOf(NeonCyan, HotPink)))
             )
-            items(lines) { line ->
-                val queryHighlight = line.startsWith("[")
-                Text(
-                    text = line,
-                    fontSize = if (queryHighlight) 18.sp else 21.sp,
-                    fontWeight = if (queryHighlight) FontWeight.Bold else FontWeight.Medium,
-                    color = if (queryHighlight) HotPink else Color.White.copy(alpha = 0.85f),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                    lineHeight = 32.sp
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Large high-contrast scrollable text frame with karaoke highlight effects
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(28.dp),
+            contentPadding = PaddingValues(top = 100.dp, bottom = 200.dp)
+        ) {
+            itemsIndexed(lyrics) { index, timedLyric ->
+                val isActive = index == activeLineIndex
+                val isChorus = timedLyric.text.startsWith("[")
+                
+                // Animated styling values for active/inactive transitions
+                val fontSize by animateFloatAsState(
+                    targetValue = if (isActive) 24f else 18f,
+                    animationSpec = spring(stiffness = Spring.StiffnessLow),
+                    label = "LyricSize"
                 )
+                
+                val alpha by animateFloatAsState(
+                    targetValue = if (isActive) 1.0f else 0.45f,
+                    animationSpec = tween(300),
+                    label = "LyricAlpha"
+                )
+
+                val textColor = if (isChorus) {
+                    HotPink
+                } else if (isActive) {
+                    NeonCyan
+                } else {
+                    Color.White
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(
+                            if (isActive) Color.White.copy(alpha = 0.06f) else Color.Transparent
+                        )
+                        .padding(vertical = 12.dp, horizontal = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = timedLyric.text,
+                        fontSize = fontSize.sp,
+                        fontWeight = if (isActive || isChorus) FontWeight.Bold else FontWeight.Medium,
+                        color = textColor.copy(alpha = alpha),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                        lineHeight = 36.sp
+                    )
+
+                    // Syllable-scale horizontal bar representing linear song progress within active lyric line
+                    if (isActive && !timedLyric.text.startsWith("♫") && !timedLyric.text.startsWith("[")) {
+                        val lineDuration = timedLyric.endMs - timedLyric.startMs
+                        val lineElapsed = (progressMs - timedLyric.startMs).coerceIn(0, lineDuration)
+                        val lineProgress = if (lineDuration > 0) lineElapsed.toFloat() / lineDuration else 0f
+                        
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Box(
+                            modifier = Modifier
+                                .width(120.dp)
+                                .height(3.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.12f))
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .fillMaxWidth(lineProgress)
+                                    .background(NeonCyan)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
