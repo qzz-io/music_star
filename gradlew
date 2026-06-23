@@ -208,6 +208,88 @@ DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
 #   * For example: A user cannot expect ${Hostname} to be expanded, as it is an environment variable and will be
 #     treated as '${Hostname}' itself on the command line.
 
+# Ensure gradle-wrapper.jar is present and not corrupt
+WRAPPER_JAR="$APP_HOME/gradle/wrapper/gradle-wrapper.jar"
+if [ ! -f "$WRAPPER_JAR" ] || [ ! -s "$WRAPPER_JAR" ] || ! "$JAVACMD" -jar "$WRAPPER_JAR" --version >/dev/null 2>&1; then
+    warn "gradle-wrapper.jar is missing, empty, or corrupt. Downloading a fresh copy..."
+    mkdir -p "$APP_HOME/gradle/wrapper"
+    
+    DOWNLOAD_SUCCESS=false
+    GRADLE_VER="9.3.1"
+    if [ -f "$APP_HOME/gradle/wrapper/gradle-wrapper.properties" ]; then
+        PROP_VER=$(grep -o 'gradle-[0-9.]\+-bin' "$APP_HOME/gradle/wrapper/gradle-wrapper.properties" | cut -d'-' -f2)
+        if [ -n "$PROP_VER" ]; then
+            GRADLE_VER="$PROP_VER"
+        fi
+    fi
+    
+    urls="https://raw.githubusercontent.com/gradle/gradle/v${GRADLE_VER}/gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.5/gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/master/gradle/wrapper/gradle-wrapper.jar"
+    
+    for url in $urls; do
+        if command -v curl >/dev/null 2>&1; then
+            curl -sSL --connect-timeout 10 -o "$WRAPPER_JAR" "$url"
+        elif command -v wget >/dev/null 2>&1; then
+            wget -q --timeout=10 -O "$WRAPPER_JAR" "$url"
+        fi
+        
+        if [ -f "$WRAPPER_JAR" ] && [ -s "$WRAPPER_JAR" ] && "$JAVACMD" -jar "$WRAPPER_JAR" --version >/dev/null 2>&1; then
+            DOWNLOAD_SUCCESS=true
+            break
+        fi
+    done
+    
+    if [ "$DOWNLOAD_SUCCESS" = "false" ]; then
+        warn "Failed downloading wrapper jar via curl/wget. Trying inline Java downloader..."
+        cat << 'EOF' > "$APP_HOME/gradle/wrapper/Downloader.java"
+import java.io.*;
+import java.net.*;
+
+public class Downloader {
+    public static void main(String[] args) {
+        String[] urls = {
+            "https://raw.githubusercontent.com/gradle/gradle/v9.3.1/gradle/wrapper/gradle-wrapper.jar",
+            "https://raw.githubusercontent.com/gradle/gradle/v8.5/gradle/wrapper/gradle-wrapper.jar",
+            "https://github.com/gradle/gradle/raw/master/gradle/wrapper/gradle-wrapper.jar"
+        };
+        String target = args[0];
+        for (String urlStr : urls) {
+            try {
+                URL url = new URL(urlStr);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setConnectTimeout(10000);
+                conn.setReadTimeout(10000);
+                InputStream in = conn.getInputStream();
+                FileOutputStream out = new FileOutputStream(target);
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, bytesRead);
+                }
+                out.close();
+                in.close();
+                System.out.println("Java download success from: " + urlStr);
+                System.exit(0);
+            } catch (Exception e) {
+                System.err.println("Failed: " + urlStr);
+            }
+        }
+        System.exit(1);
+    }
+}
+EOF
+        if "$JAVACMD" "$APP_HOME/gradle/wrapper/Downloader.java" "$WRAPPER_JAR" >/dev/null 2>&1; then
+            DOWNLOAD_SUCCESS=true
+        fi
+        rm -f "$APP_HOME/gradle/wrapper/Downloader.java"
+    fi
+    
+    if [ "$DOWNLOAD_SUCCESS" = "true" ]; then
+        warn "Successfully recovered gradle-wrapper.jar!"
+    else
+        die "ERROR: gradle-wrapper.jar is corrupt and could not be recovered automatically."
+    fi
+fi
+
 set -- \
         "-Dorg.gradle.appname=$APP_BASE_NAME" \
         -jar "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" \

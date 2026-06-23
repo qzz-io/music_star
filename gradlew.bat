@@ -70,8 +70,40 @@ goto fail
 :execute
 @rem Setup the command line
 
+@rem Ensure gradle-wrapper.jar is present and not corrupt
+set "WRAPPER_JAR=%APP_HOME%\gradle\wrapper\gradle-wrapper.jar"
+if not exist "%WRAPPER_JAR%" goto download_jar
+@rem Check if the jar has at least some content (non-zero/non-trivial size)
+for %%I in ("%WRAPPER_JAR%") do if %%~zI lss 1000 goto download_jar
+"%JAVA_EXE%" -jar "%WRAPPER_JAR%" --version >nul 2>&1
+if %ERRORLEVEL% neq 0 goto download_jar
+goto execute_gradle
 
+:download_jar
+echo. 1>&2
+echo WARNING: gradle-wrapper.jar is missing or corrupt. Downloading a fresh copy... 1>&2
+if not exist "%APP_HOME%\gradle\wrapper" mkdir "%APP_HOME%\gradle\wrapper"
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile('https://raw.githubusercontent.com/gradle/gradle/v9.3.1/gradle/wrapper/gradle-wrapper.jar', '%WRAPPER_JAR%')" >nul 2>&1
+if %ERRORLEVEL% equ 0 goto check_download
 
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile('https://raw.githubusercontent.com/gradle/gradle/v8.5/gradle/wrapper/gradle-wrapper.jar', '%WRAPPER_JAR%')" >nul 2>&1
+if %ERRORLEVEL% equ 0 goto check_download
+
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile('https://github.com/gradle/gradle/raw/master/gradle/wrapper/gradle-wrapper.jar', '%WRAPPER_JAR%')" >nul 2>&1
+
+:check_download
+if not exist "%WRAPPER_JAR%" goto download_failed
+for %%I in ("%WRAPPER_JAR%") do if %%~zI lss 1000 goto download_failed
+"%JAVA_EXE%" -jar "%WRAPPER_JAR%" --version >nul 2>&1
+if %ERRORLEVEL% neq 0 goto download_failed
+echo Successfully recovered gradle-wrapper.jar!
+goto execute_gradle
+
+:download_failed
+echo ERROR: gradle-wrapper.jar is corrupt or missing and could not be recovered automatically. 1>&2
+goto fail
+
+:execute_gradle
 @rem Execute Gradle
 "%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -jar "%APP_HOME%\gradle\wrapper\gradle-wrapper.jar" %*
 
