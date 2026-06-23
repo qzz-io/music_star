@@ -1,0 +1,6 @@
+{
+  "name": "Music Star",
+  "description": "Premium Material 3 Music Player with rich background playback services, native sound equalizing filters, active canvas voice visuals, customized sleep timer sheets, and full RTL Arabic/English translations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

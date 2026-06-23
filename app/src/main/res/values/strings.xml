@@ -1,0 +1,78 @@
+<resources>
+    <string name="app_name">Music Star</string>
+    
+    <!-- Navigation Tabs & Labels -->
+    <string name="tab_home">الرئيسية</string>
+    <string name="tab_library">المكتبة</string>
+    <string name="tab_search">البحث</string>
+    <string name="tab_playlists">قوائم التشغيل</string>
+    <string name="tab_favorites">المفضلة</string>
+    
+    <!-- Library Sections -->
+    <string name="library_all_songs">جميع الأغاني</string>
+    <string name="library_albums">الألبومات</string>
+    <string name="library_artists">الفنانون</string>
+    <string name="library_playlists">قوائم التشغيل</string>
+    <string name="library_favorites">المفضلة</string>
+    <string name="library_recent">المشغلة حديثاً</string>
+    <string name="library_folders">متصفح المجلدات</string>
+    
+    <!-- Media Player Controls & Screens -->
+    <string name="playing_next">الأغنية التالية</string>
+    <string name="sleep_timer">مؤقت النوم</string>
+    <string name="minutes_suffix">%1$d دقيقة</string>
+    <string name="sleep_timer_active">المؤقت نشط: متبقي %1$d دقيقة</string>
+    <string name="sleep_timer_cancelled">تم إلغاء مؤقت النوم</string>
+    <string name="sleep_timer_set">تم ضبط مؤقت النوم على %1$d دقيقة</string>
+    <string name="sleep_timer_select">اختر مدة النوم</string>
+    <string name="playback_speed">سرعة التشغيل</string>
+    <string name="playback_speed_title">ضبط السرعة</string>
+    <string name="equalizer">معادل الصوت</string>
+    <string name="equalizer_title">معادل الصوت الرقمي</string>
+    <string name="eq_bass">المضخم (باص)</string>
+    <string name="eq_mid">ترددات متوسطة</string>
+    <string name="eq_vocal">صوت بشري</string>
+    <string name="eq_treble">ترددات عالية</string>
+    <string name="eq_presence">الحضور الصوتي</string>
+    <string name="lyrics">كلمات الأغاني</string>
+    <string name="lyrics_title">كلمات الأغنية</string>
+    <string name="lyrics_placeholder">لا توجد كلمات متوفرة لهذه الأغنية.</string>
+    
+    <!-- Audio Visualizer -->
+    <string name="visualizer">المتفاعل المرئي</string>
+    <string name="visualizer_title">تفاعل الصوت المرئي</string>
+    
+    <!-- Playlist Actions -->
+    <string name="playlist_create">قائمة تشغيل جديدة</string>
+    <string name="playlist_rename">إعادة تسمية القائمة</string>
+    <string name="playlist_delete">حذف قائمة التشغيل</string>
+    <string name="playlist_add_song">إضافة أغنية</string>
+    <string name="playlist_remove_song">إزالة من القائمة</string>
+    <string name="playlist_hint_name">اسم قائمة التشغيل</string>
+    <string name="playlist_delete_confirm">هل أنت متأكد من رغبتك في حذف قائمة التشغيل هذه؟</string>
+    <string name="action_create">إنشاء</string>
+    <string name="action_rename">إعادة تسمية</string>
+    <string name="action_delete">حذف</string>
+    <string name="action_cancel">إلغاء</string>
+    
+    <!-- State Hints & Headers -->
+    <string name="search_hint">ابحث عن الأغاني، الألبومات، والفنانين…</string>
+    <string name="no_songs">لم يتم العثور على أي أغاني في الذاكرة.</string>
+    <string name="no_songs_desc">يرجى إضافة ملفات موسيقية إلى ذاكرة جهازك.</string>
+    <string name="empty_recent">لا توجد أغاني مشغلة مؤخراً.</string>
+    <string name="empty_favorites">لم يتم إضافة أي أغاني للمفضلة بعد.</string>
+    <string name="empty_playlists">لم يتم إنشاء أي قوائم تشغيل بعد.</string>
+    <string name="folders_title">متصفح المجلدات</string>
+    <string name="permission_required">الأذونات مطلوبة</string>
+    <string name="permission_desc">Music Star يحتاج إلى صلاحية الوصول لمسح الذاكرة وبدء تشغيل الموسيقى.</string>
+    <string name="grant_permission">منح الإذن</string>
+    <string name="share_song">مشاركة الأغنية</string>
+    <string name="added_to_favorites">تمت الإضافة للمفضلة</string>
+    <string name="removed_from_favorites">تمت الإزالة من المفضلة</string>
+    <string name="added_to_playlist">تمت الإضافة لقائمة التشغيل</string>
+    
+    <!-- Settings & Misc -->
+    <string name="current_speed">السرعة: %1$.1fx</string>
+    <string name="unknown_artist">فنان مجهول</string>
+    <string name="unknown_album">ألبوم مجهول</string>
+</resources>
