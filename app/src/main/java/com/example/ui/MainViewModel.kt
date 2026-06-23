@@ -39,6 +39,17 @@ class MainViewModel(private val repository: MusicRepository, private val context
         prefs.edit().putString("selected_theme", theme.id).apply()
     }
 
+    // Theme Mode: "light" (Day), "dark" (Night), "system" (Auto)
+    private val _themeMode = MutableStateFlow<String>(
+        prefs.getString("theme_mode", "system") ?: "system"
+    )
+    val themeMode = _themeMode.asStateFlow()
+
+    fun setThemeMode(mode: String) {
+        _themeMode.value = mode
+        prefs.edit().putString("theme_mode", mode).apply()
+    }
+
     // Device Songs State
     private val _allSongs = MutableStateFlow<List<Song>>(emptyList())
     val allSongs = _allSongs.asStateFlow()

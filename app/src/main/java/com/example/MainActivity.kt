@@ -25,7 +25,19 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             val selectedTheme by viewModel.selectedTheme.collectAsState()
-            MyApplicationTheme(appTheme = selectedTheme) {
+            val themeMode by viewModel.themeMode.collectAsState()
+            
+            val systemDark = androidx.compose.foundation.isSystemInDarkTheme()
+            val darkThemeToApply = when (themeMode) {
+                "dark" -> true
+                "light" -> false
+                else -> systemDark
+            }
+            
+            MyApplicationTheme(
+                appTheme = selectedTheme,
+                darkTheme = darkThemeToApply
+            ) {
                 AppNavigation(viewModel = viewModel)
             }
         }

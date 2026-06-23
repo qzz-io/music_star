@@ -77,6 +77,7 @@ object PlaybackManager {
                     } else if (playbackState == Player.STATE_ENDED) {
                         handlePlaybackEnded()
                     }
+                    com.example.widget.MusicWidgetProvider.updateAllWidgets(context.applicationContext)
                 }
 
                 override fun onIsPlayingChanged(isPlayingChange: Boolean) {
@@ -86,6 +87,7 @@ object PlaybackManager {
                     } else {
                         stopProgressPolling()
                     }
+                    com.example.widget.MusicWidgetProvider.updateAllWidgets(context.applicationContext)
                 }
 
                 override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -95,6 +97,7 @@ object PlaybackManager {
                         _currentSong.value = song
                         onSongChangedCallback?.invoke(song)
                     }
+                    com.example.widget.MusicWidgetProvider.updateAllWidgets(context.applicationContext)
                 }
             })
             
@@ -144,6 +147,7 @@ object PlaybackManager {
         startProgressPolling()
 
         _currentSong.value?.let { onSongChangedCallback?.invoke(it) }
+        com.example.widget.MusicWidgetProvider.updateAllWidgets(context.applicationContext)
     }
 
     fun resume() {
